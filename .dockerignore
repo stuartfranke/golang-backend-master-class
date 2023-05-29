@@ -24,4 +24,4 @@ go.work
 # Custom
 .idea
 .git
-
+.env.example
