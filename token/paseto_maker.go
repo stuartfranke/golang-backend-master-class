@@ -19,28 +19,49 @@ func NewPasetoMaker(key string) Maker {
 }
 
 // CreateToken creates a new token for a specific username and duration
-func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 	// create paseto token
 	token := paseto.NewToken()
 	// Create uuid for token id
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	// add data to the token.
 	if err = token.Set("id", tokenID.String()); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if err = token.Set("username", username); err != nil {
-		return "", err
+		return "", nil, err
 	}
-	token.SetIssuedAt(time.Now())
-	token.SetExpiration(time.Now().Add(duration))
-	return token.V4Encrypt(maker.symmetricKey, maker.key), nil
+	issuedAt := time.Now()
+	token.SetIssuedAt(issuedAt)
+	expiredAt := time.Now().Add(duration)
+	token.SetExpiration(expiredAt)
+
+	return token.V4Encrypt(maker.symmetricKey, maker.key),
+		&Payload{
+			ID:        tokenID,
+			Username:  username,
+			IssuedAt:  issuedAt,
+			ExpiredAt: expiredAt,
+		},
+		nil
 }
 
 // VerifyToken checks if the token is valid or not
 func (maker *PasetoMaker) VerifyToken(token string) (*Payload, error) {
+	// construct payload from token
+	payload, err := maker.GetPayloadFromToken(token)
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+	return payload, nil
+
+}
+
+// GetPayloadFromToken todo refactor this function
+func (maker *PasetoMaker) GetPayloadFromToken(token string) (*Payload, error) {
 	parser := paseto.NewParser()
 	parser.AddRule(paseto.NotExpired())
 	parsedToken, err := parser.ParseV4Local(maker.symmetricKey, token, maker.key)
@@ -50,29 +71,20 @@ func (maker *PasetoMaker) VerifyToken(token string) (*Payload, error) {
 		}
 		return nil, ErrInvalidToken
 	}
-	// construct payload from token
-	payload, err := getPayloadFromToken(parsedToken)
-	if err != nil {
-		return nil, ErrInvalidToken
-	}
-	return payload, nil
 
-}
-
-func getPayloadFromToken(t *paseto.Token) (*Payload, error) {
-	id, err := t.GetString("id")
+	id, err := parsedToken.GetString("id")
 	if err != nil {
 		return nil, ErrInvalidToken
 	}
-	username, err := t.GetString("username")
+	username, err := parsedToken.GetString("username")
 	if err != nil {
 		return nil, ErrInvalidToken
 	}
-	issuedAt, err := t.GetIssuedAt()
+	issuedAt, err := parsedToken.GetIssuedAt()
 	if err != nil {
 		return nil, ErrInvalidToken
 	}
-	expiredAt, err := t.GetExpiration()
+	expiredAt, err := parsedToken.GetExpiration()
 	if err != nil {
 		return nil, ErrInvalidToken
 	}

@@ -1,5 +1,18 @@
 version: "3.9"
 services:
+  app:
+    build:
+      context: .
+    container_name: gmbc
+    depends_on:
+      - postgres
+    env_file:
+      - ./app.env
+    ports:
+      - "8082:8082"
+    restart: on-failure
+    volumes:
+      - "$HOME/.ssh:/root/.ssh"
   postgres:
     image: postgres:15-alpine
     container_name: postgres
@@ -10,6 +23,6 @@ services:
       - ./app.env
     ports:
       - "54320:5432"
-    restart: always
+    restart: on-failure
     volumes:
       - "./postgresql/data:/var/lib/postgresql/data"
