@@ -3,11 +3,10 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"github.com/lib/pq"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
-
 	db "github.com/stuartfranke/golang-backend-master-class/db/sqlc"
 	"github.com/stuartfranke/golang-backend-master-class/token"
 )
@@ -32,7 +31,8 @@ func (server *Server) createAccount(ctx *gin.Context) {
 
 	account, err := server.store.CreateAccount(ctx, arg)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
 			switch pqErr.Code.Name() {
 			case "foreign_key_violation", "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
@@ -59,7 +59,8 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 	account, err := server.store.GetAccount(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		//if errors.Is(err, db.ErrRecordNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -70,7 +71,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	if account.Owner != authPayload.Username {
-		err = errors.New("account doesn't belong to the authenticated user")
+		err := errors.New("account doesn't belong to the authenticated user")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}

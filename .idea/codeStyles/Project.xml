@@ -1,0 +1,13 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <PostgresCodeStyleSettings version="6">
+      <option name="USE_GENERAL_STYLE" value="false" />
+      <option name="KEYWORD_CASE" value="2" />
+      <option name="TYPE_CASE" value="3" />
+      <option name="QUERY_EL_COMMA" value="2" />
+      <option name="QUERY_IN_ONE_STRING" value="0" />
+      <option name="QUERY_TRUE_INDENT" value="false" />
+      <option name="QUERY_ALIGN_ELEMENTS" value="false" />
+    </PostgresCodeStyleSettings>
+  </code_scheme>
+</component>

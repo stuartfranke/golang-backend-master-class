@@ -2,13 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
-
 	db "github.com/stuartfranke/golang-backend-master-class/db/sqlc"
 	"github.com/stuartfranke/golang-backend-master-class/util"
 )
@@ -60,7 +60,8 @@ func (server *Server) createUser(ctx *gin.Context) {
 
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
 			switch pqErr.Code.Name() {
 			case "unique_violation":
 				ctx.JSON(http.StatusForbidden, errorResponse(err))
@@ -72,7 +73,6 @@ func (server *Server) createUser(ctx *gin.Context) {
 	}
 
 	rsp := newUserResponse(user)
-
 	ctx.JSON(http.StatusOK, rsp)
 }
 
@@ -99,7 +99,8 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	user, err := server.store.GetUser(ctx, req.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		//if errors.Is(err, db.ErrRecordNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -127,7 +128,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
-		Username:     refreshPayload.Username,
+		Username:     user.Username,
 		RefreshToken: refreshToken,
 		UserAgent:    ctx.Request.UserAgent(),
 		ClientIp:     ctx.ClientIP(),
