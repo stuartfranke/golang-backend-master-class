@@ -2,6 +2,7 @@ package gapi
 
 import (
 	"context"
+	"errors"
 	"github.com/lib/pq"
 	db "github.com/stuartfranke/golang-backend-master-class/db/sqlc"
 	"github.com/stuartfranke/golang-backend-master-class/pb"
@@ -25,7 +26,8 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
 			switch pqErr.Code.Name() {
 			case "unique_violation":
 				return nil, status.Errorf(codes.AlreadyExists, "username already exists: %s", err)
