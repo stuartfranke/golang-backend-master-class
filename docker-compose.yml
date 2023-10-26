@@ -1,17 +1,27 @@
 services:
-#  app:
+#  api:
 #    build:
 #      context: .
-#    container_name: gmbc
-#    depends_on:
-#      - postgres
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8082:8080"
+#      - "9090:9090"
 #    env_file:
 #      - ./app.env
-#    ports:
-#      - "8082:8082"
-#    restart: on-failure
+#    environment:
+#      - DB_SOURCE=
+#    depends_on:
+#      - postgres
+#    entrypoint:
+#      [
+#        "/app/wait-for.sh",
+#        "postgres:5432",
+#        "--",
+#        "/app/start.sh"
+#      ]
+#    command: [ "/app/main" ]
 #    volumes:
-#      - "$HOME/.ssh:/root/.ssh"
+#      - "${HOME}/.ssh:/root/.ssh"
   postgres:
     image: postgres:15-alpine
     container_name: postgres
