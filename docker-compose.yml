@@ -22,6 +22,11 @@ services:
 #    command: [ "/app/main" ]
 #    volumes:
 #      - "${HOME}/.ssh:/root/.ssh"
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
   postgres:
     image: postgres:15-alpine
     container_name: postgres
