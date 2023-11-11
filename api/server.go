@@ -22,7 +22,11 @@ type Server struct {
 func NewServer(config util.Config, store db.Store) (*Server, error) {
 	tokenMaker := token.NewPasetoMaker(config.TokenSymmetricKey)
 
-	server := &Server{store: store, tokenMaker: tokenMaker, config: config}
+	server := &Server{
+		config:     config,
+		store:      store,
+		tokenMaker: tokenMaker,
+	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		if err := v.RegisterValidation("currency", validCurrency); err != nil {
